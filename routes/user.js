@@ -60,7 +60,7 @@ routes.delete("/:id", (req, res, next) => {
     try {
         const id = parseInt(req.params.id);
         const lenBefore = work.length;
-        works = work.filter((w) => w.id !== id);
+        const works = work.filter((w) => w.id !== id);
         if(works.length === lenBefore){
             return res.status(404).json( {error: `Task Not Found`} );
         }
@@ -72,7 +72,7 @@ routes.delete("/:id", (req, res, next) => {
 });
 
 // Completed Todos
-routes.get('/todos/completed', (req, res, next) => {
+routes.get('/completed', (req, res, next) => {
   try {
     const completed = work.filter((t) => t.status);
     res.json(completed); // Custom Read!
@@ -83,7 +83,7 @@ routes.get('/todos/completed', (req, res, next) => {
 });
 
 // Active todos
-routes.get('/todos/active', (req, res, next) => {
+routes.get('/active', (req, res, next) => {
   try {
     const activeTodos = work.filter((todo) => !todo.status);
     res.status(200).json(activeTodos);
