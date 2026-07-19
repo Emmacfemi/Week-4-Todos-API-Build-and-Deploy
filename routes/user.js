@@ -22,12 +22,13 @@ routes.get("/", (req, res) => {
 
 routes.post("/", userPostValidate, (req, res, next) => {
     try {
+        const {task, status, dueDate} = req.body;
+
         if(!task || task <= 3){
             return res.status(400).json( {error: "Task Needed"} ); // validate
         }
-        const {task, status} = req.body;
 
-        const newWork = {...work, id: work.length+1}
+        const newWork = { id: work.length+1, ...req.body};
 
         work.push(newWork);
         res.status(201).json(newWork);
@@ -42,9 +43,7 @@ routes.post("/", userPostValidate, (req, res, next) => {
 routes.patch("/:id", userPatchValidate, (req, res, next) => {
     try {
         const id = parseInt(req.params.id);
-        const works = work.find((w) =>{
-            w.id === id;
-        });
+        const works = work.find((w) => w.id === id);
         if(!works){
             return res.status(404).json( {error: `Not Found`} );
         }
@@ -61,11 +60,9 @@ routes.delete("/:id", (req, res, next) => {
     try {
         const id = parseInt(req.params.id);
         const lenBefore = work.length;
-        works = work.filter((w) => {
-            w.id !== id
-        });
-        if(work.length === lenBefore){
-            return res.status(404).json( {error: `Not Found`} );
+        works = work.filter((w) => w.id !== id);
+        if(works.length === lenBefore){
+            return res.status(404).json( {error: `Task Not Found`} );
         }
         res.status(204).send();
     } catch (error) {
@@ -74,9 +71,10 @@ routes.delete("/:id", (req, res, next) => {
     }
 });
 
+// Completed Todos
 routes.get('/todos/completed', (req, res, next) => {
   try {
-    const completed = todos.filter((t) => t.completed);
+    const completed = work.filter((t) => t.status);
     res.json(completed); // Custom Read!
   } catch (error) {
     next(error);
@@ -84,9 +82,10 @@ routes.get('/todos/completed', (req, res, next) => {
   }
 });
 
+// Active todos
 routes.get('/todos/active', (req, res, next) => {
   try {
-    const activeTodos = todos.filter((todo) => !todo.completed);
+    const activeTodos = work.filter((todo) => !todo.status);
     res.status(200).json(activeTodos);
   } catch (error) {
     next(error);
@@ -98,9 +97,7 @@ routes.get('/todos/active', (req, res, next) => {
 routes.get("/:id", (req, res, next) => {
     try {
         const id = parseInt(req.params.id);
-        const works = work.find((w) => {
-            w.id === id
-        });
+        const works = work.find((w) => w.id === id);
         if(!works){
             return res.status(404).json( {error: "Not Found"} );
         }

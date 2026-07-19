@@ -5,6 +5,7 @@ const errorHandler = (req, res, next) => {
         error: process.env.NODE_ENV === 'production' ? 'Internal Error' : err.message,
         ...(process.env.NODE_ENV !== 'production' && {stack: err.stack})
     })
+    next();
 }
 
 module.exports = errorHandler;
