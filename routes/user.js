@@ -3,34 +3,42 @@ const express = require("express");
 const userPostValidate = require("../middleware/postvalidation");
 const userPatchValidate = require("../middleware/patchvalidation");
 
+const Work = require("../models/work.model");
+
+
 const routes = express.Router();
 
-let work = [
-    {
-        id: 1,
-        task: "Walk Dog",
-        status: false,
-        dueDate: null
-    }    
-];
+routes.get("/", async (req, res, next) => {
+    try {
+        const userWork = {};
 
+        if(req.query.status !== undefined){
+            userWork.status = req.query.status === "true";
+        }
 
-routes.get("/", (req, res) => {
-    res.status(200).json(work);
+        const work = await Work.find(userWork);
+
+        res.status(200).json(work);
+        
+    } catch (error) {
+        next(error);
+        
+    }
+    
     
 });
 
-routes.post("/", userPostValidate, (req, res, next) => {
-    try {
+routes.post("/", userPostValidate, async (req, res, next) => {
+    
+    try {     
         const {task, status, dueDate} = req.body;
 
-        if(!task || task <= 3){
-            return res.status(400).json( {error: "Task Needed"} ); // validate
-        }
-
-        const newWork = { id: work.length+1, ...req.body};
-
-        work.push(newWork);
+        const newWork = await Work.create({
+            task,
+            status,
+            dueDate
+        });
+            
         res.status(201).json(newWork);
         
     } catch (error) {
@@ -40,31 +48,40 @@ routes.post("/", userPostValidate, (req, res, next) => {
 
 
 // PATCH update
-routes.patch("/:id", userPatchValidate, (req, res, next) => {
+routes.patch("/:id", userPatchValidate, async (req, res, next) => {
     try {
-        const id = parseInt(req.params.id);
-        const works = work.find((w) => w.id === id);
+        const workId = (req.params.id);
+
+        const works = await Work.findByIdAndUpdate(workId, req.body, {
+            new: true,
+            runValidators: true
+        });
+
         if(!works){
-            return res.status(404).json( {error: `Not Found`} );
+            return res.status(404).json( {error: `Work Not Found`} );
         }
-        Object.assign(works, req.body);
+        
         res.status(200).json(works);
+
     } catch (error) {
-        next(error)
+        next(error);
         
     }
 });
 
 // DELETE
-routes.delete("/:id", (req, res, next) => {
+routes.delete("/:id", async (req, res, next) => {
     try {
-        const id = parseInt(req.params.id);
-        const lenBefore = work.length;
-        const works = work.filter((w) => w.id !== id);
-        if(works.length === lenBefore){
+        const workId = req.params.id;
+        
+        const works = await Work.findByIdAndDelete(workId);
+
+        if(!works){
             return res.status(404).json( {error: `Task Not Found`} );
         }
-        res.status(204).send();
+
+        res.status(200).json({ message: `Work ${workId} deleted` });
+
     } catch (error) {
         next(error);
         
@@ -72,10 +89,12 @@ routes.delete("/:id", (req, res, next) => {
 });
 
 // Completed Todos
-routes.get('/completed', (req, res, next) => {
+routes.get('/completed', async (req, res, next) => {
   try {
-    const completed = work.filter((t) => t.status);
-    res.json(completed); // Custom Read!
+    const completed = await Work.find({status: true});
+
+    res.status(200).json(completed); // Custom Read!
+
   } catch (error) {
     next(error);
     
@@ -83,10 +102,12 @@ routes.get('/completed', (req, res, next) => {
 });
 
 // Active todos
-routes.get('/active', (req, res, next) => {
+routes.get('/active', async (req, res, next) => {
   try {
-    const activeTodos = work.filter((todo) => !todo.status);
+    const activeTodos = await Work.find({ status: false });
+
     res.status(200).json(activeTodos);
+
   } catch (error) {
     next(error);
     
@@ -94,13 +115,16 @@ routes.get('/active', (req, res, next) => {
 });
 
 // GET One
-routes.get("/:id", (req, res, next) => {
+routes.get("/:id", async (req, res, next) => {
     try {
-        const id = parseInt(req.params.id);
-        const works = work.find((w) => w.id === id);
+        const workId = (req.params.id);
+
+        const works = await Work.findById(workId);
+
         if(!works){
             return res.status(404).json( {error: "Not Found"} );
-        }
+        } 
+        
         res.status(200).json(works);
         
     } catch (error) {
